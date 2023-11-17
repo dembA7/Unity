@@ -20,14 +20,11 @@ public class Bullet : MonoBehaviour {
             Destroy(this.gameObject);
         } else {
             timer += Time.deltaTime;
-            transform.Translate(Vector3.forward * speed * Time.deltaTime);
+            MoveBullet();
         }
     }
 
-    private Vector3 Movement(float timer) {
-        float x = timer * speed * transform.right.x;
-        float y = timer * speed * transform.right.y;
-        float z = timer * speed * transform.right.z;
-        return new Vector3(x + spawnPoint.x, y + spawnPoint.y, z + spawnPoint.z);
+    private void MoveBullet() {
+        transform.Translate(Vector3.forward * speed * Time.deltaTime);
     }
 }
