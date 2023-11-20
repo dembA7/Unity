@@ -11,9 +11,9 @@ public class BulletSpawner : MonoBehaviour
 
     [Header("Bullet Attributes")]
     public GameObject bullet;
-    public float bulletLife = 75.0f;
+    public float bulletLife = 99999999.0f;
     private float bulletSpeed = 25.0f;
-    private int maxBulletsToSpawn = 250;
+    private int maxBulletsToSpawn = 999999;
 
     [Header("Spawner Attributes")]
     [SerializeField] private SpawnerType spawnerType = SpawnerType.Circle;
@@ -28,7 +28,7 @@ public class BulletSpawner : MonoBehaviour
     private GameObject spawnedBullet;
     private float timer = 15f;
     private float currentRotation = 0f;
-    private float rotationIncrement = 0.90f;
+    private float rotationIncrement = 0.80f;
     private int totalRotations = 0;
 
     private void Start()
@@ -56,6 +56,7 @@ public class BulletSpawner : MonoBehaviour
     private IEnumerator CirclePattern()
     {
         isRunningCircle = true;
+        Debug.Log("Circle Pattern Initiated");
 
         while (isRunningCircle)
         {
@@ -81,15 +82,12 @@ public class BulletSpawner : MonoBehaviour
 
                 transform.position = targetPosition;
                 isRunningCircle = false;
+                Debug.Log("Circle Pattern Terminated");
 
-                // Agregamos una pausa antes de cambiar al siguiente patrón
                 yield return new WaitForSeconds(1f);
-
-                // Cambiamos al siguiente patrón
-                StartCoroutine(SpiralPattern());
+                StartCoroutine(SpinPattern());
             }
 
-            // Agregamos una pequeña pausa entre cada frame de la corrutina
             yield return null;
         }
     }
@@ -97,47 +95,73 @@ public class BulletSpawner : MonoBehaviour
     private IEnumerator SpiralPattern()
     {
         isRunningSpiral = true;
+        Debug.Log("Spiral Pattern Initiated");
 
-        while (isRunningSpiral && TimeManager.Minute > 11  && TimeManager.Minute < 21)
+        while (isRunningSpiral)
         {
+            spawnerType = SpawnerType.Spiral;
             float radius = 7.5f;
             float angularSpeed = 0.85f;
+            float startTime = Time.time;
 
-            float x = radius * Mathf.Sin(angularSpeed * Time.time);
-            float y = 1.25f * radius * Mathf.Sin(2 * angularSpeed * Time.time);
+            while (Time.time - startTime <= 7.5f)
+            {
+                float x = radius * Mathf.Sin(angularSpeed * Time.time);
+                float y = 1.25f * radius * Mathf.Sin(1.75f * angularSpeed * Time.time);
+                transform.position = new Vector3(x, y, transform.position.z);
+                yield return null;
+            }
 
-            transform.position = new Vector3(x, y, transform.position.z);
+            isRunningSpiral = false;
+            Debug.Log("Spiral Pattern Terminated");
 
-            // Agregamos una pequeña pausa entre cada frame de la corrutina
-            yield return null;
         }
 
-        isRunningSpiral = false;
-        StartCoroutine(SpinPattern());
+        yield return null;
     }
 
     private IEnumerator SpinPattern()
     {
         isRunningSpin = true;
+        Debug.Log("Spin Pattern Initiated");
 
-        while (isRunningSpin )
+        while (isRunningSpin)
         {
-            transform.eulerAngles += new Vector3(0f, 0f, 2f);
-            transform.Rotate(Vector3.up * rotationIncrement);
-            currentRotation += rotationIncrement;
+            spawnerType = SpawnerType.Spin;
+            float startTime = Time.time;
+            Vector3 startPosition = transform.position;
 
-            if (currentRotation >= 149f)
+            while (Time.time - startTime <= 8.6f)
             {
-                currentRotation = 0f;
-                totalRotations++;
-                spawnerType = SpawnerType.Circle;
+                transform.eulerAngles += new Vector3(0f, 0f, 2f);
+                transform.Rotate(Vector3.up * rotationIncrement);
+                currentRotation += rotationIncrement;  
+
+                if (currentRotation >= 420f)
+                {
+                    currentRotation = 0f;
+                }
+
+                yield return null;
             }
 
-            // Agregamos una pequeña pausa entre cada frame de la corrutina
-            yield return null;
-        }
+            isRunningSpin = false;
+            Debug.Log("Spin Pattern Terminated");
 
-        isRunningSpin = false;
+            yield return new WaitForSeconds(1f);
+            StartCoroutine(RotateToInitialRotation());
+
+            yield return new WaitForSeconds(1f);
+            if (Time.time - startTime >= 5.0f)
+            {
+                Vector3 targetPosition = transform.position - Vector3.up * 20.0f;   
+                float t = (Time.time - startTime) / (20.0f / spawnerSpeed);
+                transform.position = Vector3.Lerp(startPosition, targetPosition, t);
+            }
+
+            yield return new WaitForSeconds(1f);
+            StartCoroutine(SpiralPattern());
+        }
     }
 
     private IEnumerator RotateToInitialRotation()
@@ -146,12 +170,11 @@ public class BulletSpawner : MonoBehaviour
         Quaternion startRotation = transform.rotation;
         Quaternion targetRotation = Quaternion.Euler(90f, 180f, 0f);
 
-        while (Time.time - startTime <= 0.175f)
+        while (Time.time - startTime <= 0.235f)
         {
             float t = (Time.time - startTime) / 2.0f;
             transform.rotation = Quaternion.Slerp(startRotation, targetRotation, t);
 
-            // Agregamos una pequeña pausa entre cada frame de la corrutina
             yield return null;
         }
 
@@ -171,7 +194,6 @@ public class BulletSpawner : MonoBehaviour
                 spawnedBullet.GetComponent<Bullet>().rotation = transform.eulerAngles.z;
                 bulletCount++;
             }
-            Debug.Log("Bullets Spawned: " + bulletCount);
         }
 
         if (bulletCountUI != null)
